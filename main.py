@@ -53,18 +53,51 @@ def add_item(name: str, qty: int):
 @app.command()
 def del_item(item_id: str):
     """Deletes an item from the inventory based on its ID."""
-    inventory = load_data() # 1. Load the list from the file
+    inventory = load_data()
     starting_count = len(inventory)
     
-    # 2. Filter logic: Keep only items where the ID does NOT match the one to delete
+    
     inventory = [item for item in inventory if item["id"] != item_id]
     
-    # 3. Validation: Check if the length changed
+    
     if len(inventory) == starting_count:
         console.print(f"[bold red]Error:[/] ID {item_id} not found in {DATA_FILE}")
     else:
-        save_data(inventory) # 4. Save the new filtered list
+        save_data(inventory)
         console.print(f"[bold green]Success![/] Item ID {item_id} removed from system.")
+
+
+@app.command()
+def update_qty(item_id: str, change: int):
+    """
+    Adjusts the quantity of an item in the inventory.
+    Use a positive number to add stock (stow) or a negative number to remove stock (pick).
+    example: update-qty -- 2 -3
+    """
+
+    inventory = load_data() # 1. Load the current data
+    found = False
+
+    for item in inventory:
+        if item["id"] == item_id:
+            # 2. Convert the string quantity to an integer to do math
+            current_qty = int(item["quantity"])
+            new_qty = current_qty + change
+            
+            # 3. Validation: Prevent 'ghost' inventory (negative numbers)
+            if new_qty < 0:
+                console.print(f"[bold red]Error:[/] Insufficient stock. Current: {current_qty}, Attempted change: {change}")
+                return
+            
+            item["quantity"] = str(new_qty) # Convert back to string for CSV
+            found = True
+            break
+
+    if found:
+        save_data(inventory) # 4. Save the updated list
+        console.print(f"[bold green]Success![/] ID {item_id} quantity is now {item['quantity']}.")
+    else:
+        console.print(f"[bold red]Error:[/] Item ID {item_id} not found.")
 
 if __name__ == "__main__":
     app()
