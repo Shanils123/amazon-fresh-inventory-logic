@@ -23,6 +23,7 @@ def load_data():
             {"id": "1", "name": "Silk Soy Milk", "quantity": "12", "status": "active"},
             {"id": "2", "name": "Chobani Yogurt", "quantity": "24", "status": "active"},
             {"id": "3", "name": "Amazon Fresh Water 24pk", "quantity": "50", "status": "active"},
+            {"id": "4", "name": "Silk Almond Milk", "quantity": "19", "status": "active"},
         ]
     with open(DATA_FILE, mode="r") as f:
         return list(csv.DictReader(f))
@@ -106,22 +107,41 @@ def update_qty(item_id: str, change: int):
         console.print(f"[bold red]❌ Error:[/] ID {item_id} not found.")
 
 @app.command()
-def mark_damage(item_id: str):
-    """Flags an item as damaged for Problem Solve."""
+def mark_damage():
+    """Problem Solve: search for an item and flag it as damaged."""
+    print_header()
     inventory = load_data()
-    found = False
 
+    searched_item = console.input("[bold yellow] Enter product name to report it as damaged: [/]")
+
+    results = [item for item in inventory if searched_item.lower() in item['name'].lower()]
+
+    if not results: 
+        console.print(f"[bold red]❌ No results found for '{searched_item}'.[/]")
+        return
+    
+    table = Table(title=f"results for '{searched_item}'")
+    table.add_column("ID", style="cyan")
+    table.add_column("Product Name")
+    table.add_column("Current Qty")
+    for item in results:
+        table.add_row(item["id"], item["name"], item["quantity"])
+    console.print(table)
+
+    target_id = console.input("[bold yellow] Enter the ID of the item to mark as damaged: [/]")
+
+    found = False
     for item in inventory:
-        if item["id"] == item_id:
+        if item['id'] == target_id:
             item["status"] = "Damaged"
             found = True
             break
             
     if found:
         save_data(inventory)
-        console.print(f"[bold yellow]⚠️ REPORTED:[/] Item {item_id} moved to DAMAGED status.")
+        console.print(f"[bold yellow]⚠️ REPORTED:[/] Item {target_id} moved to DAMAGED status.")
     else:
-        console.print(f"[bold red]❌ Error:[/] ID {item_id} not found.")
+        console.print(f"[bold red]❌ Error:[/] ID {target_id} not found.")
 
 @app.command()
 def del_item(item_id: str):
@@ -150,6 +170,7 @@ def search(name: str):
         for item in results:
             table.add_row(item["id"], item["name"], item["quantity"])
         console.print(table)
+        console.print(f"\n[bold cyan] 🔍 Found {len(results)} matching items.[/]")
     else:
         console.print(f"[bold red]❌ No results found for '{name}'.[/]")
 
