@@ -130,9 +130,17 @@ def mark_damage():
 
     target_id = console.input("[bold yellow] Enter the ID of the item to mark as damaged: [/]")
 
+    damage_qty = int(console.input("[bold yellow] Enter quantity to mark as damaged: [/]"))
+
     found = False
     for item in inventory:
         if item['id'] == target_id:
+            current_qty = int(item["quantity"])
+            if damage_qty > current_qty:
+                console.print(f"[bold red]❌ Error:[/] Cannot mark {damage_qty} as damaged. Only {current_qty} in stock.")
+                return
+            
+            item["quantity"] = str(current_qty - damage_qty)
             item["status"] = "Damaged"
             found = True
             break
