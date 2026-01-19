@@ -1,5 +1,5 @@
-id,name,quantity,status
-1,Silk Soy Milk,12,Damaged
-2,Chobani Yogurt,24,active
-3,Amazon Fresh Water 24pk,44,Damaged
-4,Silk Almond Milk,19,Damaged
+id,name,qty_sellable,qty_damaged,status
+1,Silk Soy Milk,12,0,active
+2,Chobani Yogurt,1,0,active
+3,Silk Almond Milk,30,0,active
+4,Organic Bananas,70,0,active

@@ -20,10 +20,8 @@ def load_data():
     """Loads inventory from the CSV file."""
     if not os.path.exists(DATA_FILE):
         return [
-            {"id": "1", "name": "Silk Soy Milk", "quantity": "12", "status": "active"},
-            {"id": "2", "name": "Chobani Yogurt", "quantity": "24", "status": "active"},
-            {"id": "3", "name": "Amazon Fresh Water 24pk", "quantity": "50", "status": "active"},
-            {"id": "4", "name": "Silk Almond Milk", "quantity": "19", "status": "active"},
+            {"id": "1", "name": "Silk Soy Milk", "qty_sellable": "12", "qty_damaged": "0", "status": "active"},
+            {"id": "2", "name": "Chobani Yogurt", "qty_sellable": "24", "qty_damaged": "0", "status": "active"},
         ]
     with open(DATA_FILE, mode="r") as f:
         return list(csv.DictReader(f))
@@ -31,7 +29,7 @@ def load_data():
 def save_data(inventory):
     """Saves the inventory list to the CSV file."""
     with open(DATA_FILE, mode="w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["id", "name", "quantity", "status"])
+        writer = csv.DictWriter(f, fieldnames=["id", "name", "qty_sellable", "qty_damaged", "status"])
         writer.writeheader()
         writer.writerows(inventory)
         console.print(f"[italic cyan]📦 System Audit: {len(inventory)} items persisted to {DATA_FILE}[/]")
@@ -45,21 +43,24 @@ def list_stock():
     table = Table(title="Live Warehouse Inventory", box=None, header_style="bold magenta")
     table.add_column("ID", justify="center", style="cyan")
     table.add_column("Product Name")
-    table.add_column("Quantity", justify="right")
+    table.add_column("Sellable", justify="right", style="green")
+    table.add_column("Damaged", justify="right", style="red")
     table.add_column("Status", justify="center")
 
     for item in inventory:
-        qty = int(item["quantity"])
+        qty_sellable = int(item["qty_sellable"])
+        qty_damaged = int(item["qty_damaged"])
         
+        color = 'white'
         
         if item["status"].lower() == "damaged":
             color = "bold yellow"
-        elif qty < 25:
+        elif qty_sellable < 25:
             color = "bold red"
         else:
             color = "green"
             
-        table.add_row(item["id"], item["name"], str(qty), item["status"].upper(), style=color)
+        table.add_row(item["id"], item["name"], str(qty_sellable), str(qty_damaged), item["status"].upper(), style=color)
     
     console.print(table)
     console.print(f"\n[bold blue]Total unique SKUs:[/] {len(inventory)}")
@@ -72,7 +73,8 @@ def add_item(name: str, qty: int):
     inventory.append({
         "id": new_id, 
         "name": name, 
-        "quantity": str(qty),
+        "qty_sellable": str(qty),
+        "qty_damaged": "0", 
         "status": "active"
     })
     save_data(inventory)
@@ -89,14 +91,14 @@ def update_qty(item_id: str, change: int):
 
     for item in inventory:
         if item["id"] == item_id:
-            current_qty = int(item["quantity"])
+            current_qty = int(item["qty_sellable"])
             new_qty = current_qty + change
             
             if new_qty < 0:
                 console.print(f"[bold red]❌ Error:[/] Insufficient stock. Current: {current_qty}")
                 return
             
-            item["quantity"] = str(new_qty)
+            item["qty_sellable"] = str(new_qty)
             found = True
             break
 
@@ -125,23 +127,29 @@ def mark_damage():
     table.add_column("Product Name")
     table.add_column("Current Qty")
     for item in results:
-        table.add_row(item["id"], item["name"], item["quantity"])
+        table.add_row(item["id"], item["name"], f"S: {item['qty_sellable']} | D: {item['qty_damaged']}")
     console.print(table)
 
     target_id = console.input("[bold yellow] Enter the ID of the item to mark as damaged: [/]")
 
     damage_qty = int(console.input("[bold yellow] Enter quantity to mark as damaged: [/]"))
 
+    if damage_qty <= 0:
+        console.print("[bold red]❌ Error:[/] Please enter a positive number greater than 0.")
+        return
+
     found = False
     for item in inventory:
         if item['id'] == target_id:
-            current_qty = int(item["quantity"])
-            if damage_qty > current_qty:
-                console.print(f"[bold red]❌ Error:[/] Cannot mark {damage_qty} as damaged. Only {current_qty} in stock.")
+            current_s = int(item["qty_sellable"])
+            current_d = int(item.get("qty_damaged"))
+
+            if damage_qty > current_s:
+                console.print(f"[bold red]❌ Error:[/] Cannot mark {damage_qty} as damaged. Only {current_s} sellable.")
                 return
             
-            item["quantity"] = str(current_qty - damage_qty)
-            item["status"] = "Damaged"
+            item["qty_sellable"] = str(current_s - damage_qty)
+            item["qty_damaged"] = str(current_d + damage_qty)
             found = True
             break
             
@@ -176,7 +184,7 @@ def search(name: str):
         table.add_column("Product")
         table.add_column("Qty")
         for item in results:
-            table.add_row(item["id"], item["name"], item["quantity"])
+            table.add_row(item["id"], item["name"], f"S: {item['qty_sellable']} | D: {item['qty_damaged']}")
         console.print(table)
         console.print(f"\n[bold cyan] 🔍 Found {len(results)} matching items.[/]")
     else:
