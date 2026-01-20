@@ -20,8 +20,14 @@ def load_data():
     """Loads inventory from the CSV file."""
     if not os.path.exists(DATA_FILE):
         return [
-            {"id": "1", "name": "Silk Soy Milk", "qty_sellable": "12", "qty_damaged": "0", "status": "active"},
-            {"id": "2", "name": "Chobani Yogurt", "qty_sellable": "24", "qty_damaged": "0", "status": "active"},
+            {"id": "1", "name": "Silk Soy Milk 64oz", "qty_sellable": "45", "qty_damaged": "0", "status": "active"},
+            {"id": "2", "name": "Chobani Greek Yogurt Strawberry", "qty_sellable": "8", "qty_damaged": "2", "status": "active"},
+            {"id": "3", "name": "Organic Bananas (Bunch)", "qty_sellable": "120", "qty_damaged": "5", "status": "active"},
+            {"id": "4", "name": "Amazon Fresh Water 24pk", "qty_sellable": "200", "qty_damaged": "0", "status": "active"},
+            {"id": "5", "name": "Silk Almond Milk Vanilla", "qty_sellable": "15", "qty_damaged": "0", "status": "active"},
+            {"id": "6", "name": "Whole Milk 1gal", "qty_sellable": "60", "qty_damaged": "3", "status": "active"},
+            {"id": "7", "name": "Honeycrisp Apples 3lb Bag", "qty_sellable": "4", "qty_damaged": "0", "status": "active"},
+            {"id": "8", "name": "Avocado 4ct Bag", "qty_sellable": "35", "qty_damaged": "1", "status": "active"},
         ]
     with open(DATA_FILE, mode="r") as f:
         return list(csv.DictReader(f))
@@ -69,7 +75,13 @@ def list_stock():
 def add_item(name: str, qty: int):
     """Adds a new item to the inventory."""
     inventory = load_data()
-    new_id = str(len(inventory) + 1)
+    
+    if inventory:
+        max_id = max(int(item["id"]) for item in inventory)
+        new_id = str(max_id + 1)
+    else:
+        new_id = "1"
+    
     inventory.append({
         "id": new_id, 
         "name": name, 
@@ -77,8 +89,9 @@ def add_item(name: str, qty: int):
         "qty_damaged": "0", 
         "status": "active"
     })
+    
     save_data(inventory)
-    console.print(f"[bold green]✅ Success![/] Added {name} to the system.")
+    console.print(f"[bold green]✅ Success![/] Added {name} with ID {new_id}.")
 
 @app.command()
 def update_qty(item_id: str, change: int):
@@ -104,7 +117,7 @@ def update_qty(item_id: str, change: int):
 
     if found:
         save_data(inventory)
-        console.print(f"[bold green]✅ Success![/] ID {item_id} updated to {item['quantity']}.")
+        console.print(f"[bold green]✅ Success![/] ID {item_id} updated to {item['qty_sellable']}.")
     else:
         console.print(f"[bold red]❌ Error:[/] ID {item_id} not found.")
 
@@ -241,6 +254,35 @@ def search(name: str):
         console.print(f"\n[bold cyan] 🔍 Found {len(results)} matching items.[/]")
     else:
         console.print(f"[bold red]❌ No results found for '{name}'.[/]")
+
+@app.command()
+def dashboard():
+    """📊 UMA4 Dashboard: warehouse health summary"""
+    print_header()
+    inventory = load_data()
+
+
+    total_skus = len(inventory)
+    total_sellable = sum(int(item["qty_sellable"]) for item in inventory)
+    total_damaged = sum(int(item["qty_damaged"]) for item in inventory)
+    low_stock_items = [item for item in inventory if int(item["qty_sellable"]) < 10]
+
+    summary_text = (
+        f"[bold blue]Total SKUs:[/] {total_skus}\n"
+        f"[bold green]Total Sellable Items:[/] {total_sellable}\n"
+        f"[bold red]Total Damaged Items:[/] {total_damaged}\n"
+        f"[bold yellow]Low Stock Items (<10):[/] {len(low_stock_items)}"
+    )
+    
+    console.print(Panel(summary_text, title="📊 Warehouse Dashboard", style="bold magenta"))
+
+    if low_stock_items:
+        table = Table(title="Critical Low Stock Items", box=None)
+        table.add_column("Product", style="yellow")
+        table.add_column("Qty", justify="right")
+        for item in low_stock_items:
+            table.add_row(item["name"], item["qty_sellable"])
+        console.print(table)
 
 if __name__ == "__main__":
     app()
