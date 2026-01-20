@@ -1,9 +1,9 @@
 id,name,qty_sellable,qty_damaged,status
-1,Silk Soy Milk 64oz,45,0,active
+1,Silk Soy Milk 64oz,40,0,active
 3,Organic Bananas (Bunch),120,5,active
 4,Amazon Fresh Water 24pk,200,0,active
 5,Silk Almond Milk Vanilla,15,0,active
 6,Whole Milk 1gal,60,3,active
-7,Honeycrisp Apples 3lb Bag,2,0,active
+7,Honeycrisp Apples 3lb Bag,2,2,active
 8,Avocado 4ct Bag,35,1,active
-9,Pure Almond Extract Oil 10.1 fl oz,60,5,active
+9,Silk Oat Milk,30,0,active
