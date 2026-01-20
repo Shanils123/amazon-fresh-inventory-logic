@@ -173,6 +173,58 @@ def del_item(item_id: str):
         console.print(f"[bold green]🗑️ Success![/] Item ID {item_id} removed.")
 
 @app.command()
+def pick():
+    """Simulates a pick/ Searches for an ITEM and removes quantity from sellable stock."""
+    print_header()
+    inventory = load_data()
+
+    search_term = console.input("[bold yellow] Enter product name to pick from: [/]")
+    results = [item for item in inventory if search_term.lower() in item['name'].lower()]
+
+    if not results:
+        console.print(f"[bold red] ❌ No items found matching '{search_term}'.[/]")
+        return
+    
+    table = Table(title=f"Select ID to pick from")
+    table.add_column("ID", style="cyan")
+    table.add_column("Product Name")
+    table.add_column("sellable Qty", style="green")
+    for item in results:
+        table.add_row(item["id"], item["name"], item["qty_sellable"])
+    console.print(table)
+
+    target_id = console.input("[bold yellow] Enter the ID of the item to pick: [/]")
+
+    try: 
+        pick_qty = int(console.input("[bold yellow] How many are you picking? [/]"))
+        if pick_qty <= 0:
+            console.print("[bold red]❌ Error:[/] Please enter a positive number greater than 0.")
+            return
+
+    except ValueError:
+        console.print("[bold red] ❌ Error:[/]  Quantity must be a number.")
+        return
+
+
+    found = False
+    for item in inventory:
+        if item['id'] == target_id:
+            current_qty = int(item["qty_sellable"])
+            if pick_qty > current_qty:
+                console.print(f"[bold red]❌ Error:[/] Cannot pick {pick_qty}. Only {current_qty} available.")
+                return
+            item["qty_sellable"] = str(current_qty - pick_qty)
+            found = True
+            break
+
+    if found:
+        save_data(inventory)
+        console.print(f"[bold green]✅ Success![/] Picked {pick_qty} of item {target_id}.")
+    else:
+        console.print(f"[bold red]❌ Error:[/] ID {target_id} not found.")
+
+
+@app.command()
 def search(name: str):
     """Finds items by name."""
     inventory = load_data()

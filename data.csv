@@ -1,4 +1,5 @@
 id,name,qty_sellable,qty_damaged,status
-2,Chobani Yogurt,1,0,active
-3,Silk Almond Milk,30,0,active
-4,Organic Bananas,70,0,active
+1,Silk Soy Milk,12,0,active
+2,Chobani Yogurt,24,0,active
+3,Organic Bananas,70,0,active
+4,20 pound rice,50,0,active
